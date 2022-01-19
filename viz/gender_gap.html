@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <title>Title</title>
 
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="https://d3js.org/topojson.v2.min.js"></script>
 
@@ -16,11 +22,59 @@
     <script type="text/javascript" src="main.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<section id="viz"></section>
+
+<body class="bg-dark" style="height: 100vh;width: 100vw">
+<section id="viz" style="height:82vh">
+    <div class="card px-2 py-2 " id="info" style="top: -100000px;left: -100000px; width: 200px;position: absolute">
+        <div class="text-primary card-header d-flex justify-content-between" >
+            <span class="font-weight-bold" id="country"></span>
+            <div style="width: 20px">
+
+            </div>
+            <span class="" id="year"></span>
+        </div>
+        <ul class="list-group list-group-flush justify-content-center">
+            <li class="list-group-item  bg-dark text-light"  style="text-align: center" id="value"></li>
+        </ul>
+    </div>
+</section>
+
+<section id="tools" style="width: 100%;height: 20vh ; background: #b2abab" class="py-2 px-2; d-flex justify-content-center">
+        <div style="width: 60%; margin-bottom: 20px;" class="d-flex justify-content-center">
+
+            <div class="card p-2" style="width: 20%">
+                <div class="card-header">
+                    Indicator
+                </div>
+
+            </div>
+
+            <div class="card p-2" style="width: 20%">
+                <div class="card-header">
+                    Year
+                </div>
+
+            </div>
+
+            <div class="card p-2" style="width: 20%">
+                <div class="card-header">
+                    Agregation
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+
+
+</section>
 
 
 <script>
     init();
 </script>
+
 </body>
 </html>

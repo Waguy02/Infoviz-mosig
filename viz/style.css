@@ -1,17 +1,17 @@
 body {
     font-family: Consolas, monaco, monospace;
-    color: grey;
-    background: #eee;
+
 }
+
 span {
     color: black;
     letter-spacing: 2px;
 }
 circle {
-    fill: lightblue;
-    fill-opacity: 0.5;
-    stroke: blue;
-    stroke-width: 0.5px;
+    fill: #b2abab;
+    fill-opacity: 0.8;
+    stroke: white;
+    stroke-width: 1px;
 
 }
 circle#code-392 {

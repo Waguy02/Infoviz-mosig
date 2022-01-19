@@ -5,7 +5,7 @@ var d3;
 var svg;
 
 //2. World map builder
-const width = 1920, height = 1080   ;
+const width = window.innerWidth, height =window.innerHeight;
 var world;
 var projection = d3.geoMercator().scale(200).translate([width / 2, height / 2]).precision(.1);
 var path = d3.geoPath().projection(projection);
@@ -15,13 +15,18 @@ var dataset=[];
 var countries={};
 const YEARS=[2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2018,2019,2020]
 var INDICATOR_NAMES=[]
+const SUBINDICATOR_INDEX="Index",SUBDINDICATOR_RANK="Rank"
+
+//4. Scaling Bound;
+const RADIUS_FACTOR=1.2;
+
 
 //Functions
 
 //1. Dataset Setup
 async function setup_dataset(){
 
-        world=await d3.json("../data/world_map.json");
+    world=await d3.json("../data/world_map.json");
         projection = d3.geoMercator().scale(200).translate([width / 2, height / 2]).precision(.1);
         path = d3.geoPath().projection(projection);
 
@@ -71,41 +76,59 @@ async function setup_dataset(){
         }
 
 
-/***
+/***2
  * Render countries data individually
  * @param indicator_name
  * @param year
  * @returns {Promise<void>}
  */
-async function render_countries_data(indicator_name,year)
+async function render_countries_index(indicator_name,year)
 {
     d3.select("g").remove(); //Remove all existing points;
-    let scale_factor=scale(indicator_name);
 
-    let filtered_values=dataset.filter((d) => d.indicator_name==indicator_name);
+
+
+    let filtered_values=dataset.filter((d) => d.indicator_name==indicator_name&&!isNaN(d.years_data[year])
+        &&d.subindicator_type==SUBINDICATOR_INDEX);
+
+    const scaler=scaler_generator(filtered_values,year);
+
+
+
 
     svg.selectAll('circle').data(
         filtered_values
         )
         .enter().append("circle")
-        .attr("r", function(d) {
-            return d.years_data[year]*scale_factor;
+        .on("mouseover", function(event,d) {
+            d3.select("#info").style('opacity',1).style('top',d.center[1].toString()+"px").style('left',d.center[0].toString()+"px")
+            d3.select("#country").html(d.country_name);
+            d3.select("#year").html(year)
+            d3.select("#value").html(d.years_data[year].toFixed(2))
+
         })
-        .on('mouseover', d => d3.select('#info').text(d.country_name+"\n"+year+"\n"+indicator_name))
-        .attr('transform', function (d) {
+        .on("mouseout", function(event,d) {
+            d3.select("#info").style('top',"-100000px").style('left',"-100000px")
+
+
+        })
+        .attr("r", function(d) {
+            return scaler(d);
+        }).
+        attr('transform', function (d) {
         return 'translate(' + d.center + ')'});
 
 
 }
 
 
-/***
+/***3
  * Render continentns agregation data;
  * @param indicator_name
  * @param year
  * @returns {Promise<void>}
  */
-async function render_continents(indicator_name,year){
+async function render_continents_index(indicator_name, year){
 
 }
 
@@ -113,8 +136,13 @@ async function render_continents(indicator_name,year){
 /**
  *
  */
-function scale(index) {
-    return 0.2;
+function scaler_generator(filtered_values,year) {
+    let values=filtered_values.map(d=>d.years_data[year])
+    let max=Math.max(...values);
+    let min=Math.min(...values);
+    return function(x){
+        return x.years_data[year]*x.radius*RADIUS_FACTOR;
+    }
 }
 
 
@@ -123,5 +151,5 @@ function scale(index) {
 async function init(){
         svg = d3.select('#viz').append('svg').attr('width', width).attr('height', height);
         await  setup_dataset() ;
-        await  render_countries_data("Estimated earned income (PPP, US$)",2018);
+        await  render_countries_index("Estimated earned income (PPP, US$)",2018);
     }
