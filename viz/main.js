@@ -36,17 +36,18 @@ var config={
 //6. Color
 
 var CONTINENTS_COLOUR={
-    Africa:"yellow",
+    Asia :"green",
+    Oceania:"pink",
     Europe:"red",
+    Africa:"yellow",
     "North America":"orange",
     "South America":"purple",
-    Asia :"green",
-    Oceania:"pink"
+
 
 
 }
 
-
+var CONTINENTS=["Africa","Europe","North America","South America","Asia","Oceania"];
 
 //Functions
 
@@ -58,7 +59,7 @@ async function setup_dataset(){
         path = d3.geoPath().projection(projection);
 
         async function load_countries_positions(){
-            //Draw map
+            //Draw country
             svg.append("path")
                 .datum(topojson.feature(world, world.objects.countries))
                 .attr("d", path)
@@ -146,6 +147,13 @@ async function render(config)
     const indicator_name=config.indicator, year=config.year,rank_mode=config.rank_mode,aggregate_continents=config.aggregate_continents;
     d3.selectAll("circle").remove(); //Remove all existing points;
 
+    let year_x=14+(year-YEARS[0])*1.005
+    let year_y=72-(year-YEARS[0])*1.005
+    d3.select("#year").html(year).style("left",year_x.toString()+"vw").style("top",year_y.toString()+"vh");
+
+
+
+
 
 
     let filtered_values=dataset.filter((d) => d.indicator_name==indicator_name&&!isNaN(d.years_data[year])
@@ -163,8 +171,33 @@ async function render(config)
             }
     }
     else{
+        let colour_scale=generateColourRange(CONTINENTS.length);
+        let continent_colors=new Map();
+
+        let continent_ordering=CONTINENTS.map(c=>{
+            let total=0;
+            let nb_countries=0;
+            for(let d of dataset){
+                if(d.continent==c&&d.subindicator_type==SUBINDICATOR_INDEX&&!isNaN(d.years_data[year])){
+
+                    total+=d.years_data[year];
+                    nb_countries++;
+                }
+            }
+            if(nb_countries==0)return [c,0];
+            return [c,total/nb_countries];
+        }).sort((c1_data,c2_data)=>c2_data[1]-c1_data[1]).map(c_data=>c_data[0]);
+
+        for(let j=0;j<CONTINENTS.length;j++){
+            continent_colors.set(continent_ordering[j],colour_scale[j]);
+        }
+
+
+
         for (let i =0;i<filtered_values.length;i++){
-            filtered_values[i]["colour"]=CONTINENTS_COLOUR[filtered_values[i].continent];
+            let continent=filtered_values[i].continent;
+            if(continent==undefined)continue;
+            filtered_values[i]["colour"]=continent_colors.get(continent);
         }
     }
 
@@ -183,8 +216,9 @@ async function render(config)
         .on("mouseover", function(event,d) {
             d3.select("#info").style('opacity',1).style('top',d.center[1].toString()+"px").style('left',d.center[0].toString()+"px")
             d3.select("#country").html(d.country_name);
-            d3.select("#year").html(year)
-            d3.select("#value").html(d.years_data[year].toFixed(2))
+
+            d3.select("#rank").html("Rank : " +d.rank)
+            d3.select("#value").html("Value : "+ d.years_data[year].toFixed(2))
 
         })
         .on("mouseout", function(event,d) {
