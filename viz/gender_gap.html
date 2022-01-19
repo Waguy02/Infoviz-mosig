@@ -23,10 +23,10 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body class="bg-dark" style="height: 100vh;width: 100vw">
+<body class="bg-dark" id="body" style="height: 100vh;width: 100vw" onload="init()">
 <section id="viz" style="height:82vh">
     <div class="card px-2 py-2 " id="info" style="top: -100000px;left: -100000px; width: 200px;position: absolute">
-        <div class="text-primary card-header d-flex justify-content-between" >
+        <div class="text-primary card-header d-flex justifFy-content-between" >
             <span class="font-weight-bold" id="country"></span>
             <div style="width: 20px">
 
@@ -39,24 +39,47 @@
     </div>
 </section>
 
-<section id="tools" style="width: 100%;height: 20vh ; background: #b2abab" class="py-2 px-2; d-flex justify-content-center">
+<section id="tools" style="width: 100%;height: 18vh ; background: #b2abab" class="py-2 px-2; d-flex justify-content-center">
         <div style="width: 60%; margin-bottom: 20px;" class="d-flex justify-content-center">
 
-            <div class="card p-2" style="width: 20%">
+            <div class="card card-menu p-2 bg-dark text-light" style="width: 40%">
                 <div class="card-header">
                     Indicator
                 </div>
 
-            </div>
-
-            <div class="card p-2" style="width: 20%">
-                <div class="card-header">
-                    Year
+                <div class="form-group">
+                    <select class="form-control "  id="indicator_selector">
+                    </select>
                 </div>
 
+
             </div>
 
-            <div class="card p-2" style="width: 20%">
+            <div class="card card-menu p-2 bg-dark" style="width: 30%">
+                <div class="card-header text-light d-flex justify-content-between">
+                    <span style="margin-top: 5px;margin-right: 10px" class="text-light">Year</span>
+                    <span class="bg-light text-dark px-1 py-1" style="border-radius: 0.5em" id="current_year">
+
+                    </span>
+                </div>
+                <div class="d-flex flex-column justify-content-center full-height">
+                <form class="range-field  justify-content-center d-flex full-width">
+                    <input class="bar full-width" type="range" id="year_selector"/>
+                </form>
+
+
+
+
+                </div>
+
+
+
+
+
+
+            </div>
+
+            <div class="card card-menu p-2 bg-dark text-light" style="width: 30%">
                 <div class="card-header">
                     Agregation
                 </div>
@@ -72,9 +95,8 @@
 </section>
 
 
-<script>
-    init();
-</script>
+
 
 </body>
+
 </html>

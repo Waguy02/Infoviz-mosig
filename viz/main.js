@@ -5,10 +5,11 @@ var d3;
 var svg;
 
 //2. World map builder
-const width = window.innerWidth, height =window.innerHeight;
+var width;
+var height;
 var world;
-var projection = d3.geoMercator().scale(200).translate([width / 2, height / 2]).precision(.1);
-var path = d3.geoPath().projection(projection);
+var projection;
+var path;d3.geoPath().projection(projection);
 
 //3. Data
 var dataset=[];
@@ -17,9 +18,18 @@ const YEARS=[2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2018,2019,20
 var INDICATOR_NAMES=[]
 const SUBINDICATOR_INDEX="Index",SUBDINDICATOR_RANK="Rank"
 
-//4. Scaling Bound;
+//4. Scaling ;
 const RADIUS_FACTOR=1.2;
 
+
+//5. Configuration;
+var config={
+    year:2006,
+    indicator:undefined,
+    show_rank:false,
+    aggregate_continents:false,
+
+}
 
 //Functions
 
@@ -82,9 +92,10 @@ async function setup_dataset(){
  * @param year
  * @returns {Promise<void>}
  */
-async function render_countries_index(indicator_name,year)
+async function render(config)
 {
-    d3.select("g").remove(); //Remove all existing points;
+    const indicator_name=config.indicator, year=config.year,show_rank=config.show_rank,aggregate_continents=config.aggregate_continents;
+    d3.selectAll("circle").remove(); //Remove all existing points;
 
 
 
@@ -122,15 +133,7 @@ async function render_countries_index(indicator_name,year)
 }
 
 
-/***3
- * Render continentns agregation data;
- * @param indicator_name
- * @param year
- * @returns {Promise<void>}
- */
-async function render_continents_index(indicator_name, year){
 
-}
 
 
 /**
@@ -147,9 +150,58 @@ function scaler_generator(filtered_values,year) {
 
 
 
+function build_menu(config){
+    d3.select("#year_selector").attr("min",YEARS[0]).attr("max",YEARS[YEARS.length-1]).attr("value",config.year);
+    d3.select("#current_year").html(config.year.toString());
+
+    document.getElementById("year_selector").addEventListener(
+        'change', (e) => {
+            console.log("Rendering");
+            config.year=e.target.value;
+            d3.select("#current_year").html(config.year.toString());
+            render(config);
+
+        });
+
+
+    const selector=document.getElementById("indicator_selector");
+    INDICATOR_NAMES.forEach((c)=>{
+        var opt = document.createElement('option');
+        opt.value = c;
+        opt.innerHTML = c;
+        selector.appendChild(opt);
+    })
+    selector.selectedIndex=0;
+
+    selector.addEventListener('change', (e) => {
+        config.indicator=e.target.value;
+        render(config);
+
+    });
+
+    document.getElementById("year_selector").addEventListener(
+        'change', (e) => {
+            console.log("Rendering");
+            config.year=e.target.value;
+            d3.select("#current_year").html(config.year.toString());
+            render(config);
+
+        });
+
+
+}
+
 
 async function init(){
-        svg = d3.select('#viz').append('svg').attr('width', width).attr('height', height);
-        await  setup_dataset() ;
-        await  render_countries_index("Estimated earned income (PPP, US$)",2018);
+            width =document.getElementById("body").offsetWidth;
+            height =document.getElementById("body").offsetHeight;
+            svg = d3.select('#viz').append('svg').attr('width', width).attr('height', height);
+
+        projection = d3.geoMercator().scale(200).translate([width / 2, height / 2]).precision(.1);
+        path = d3.geoPath().projection(projection);
+
+    await  setup_dataset() ;
+        config.indicator=INDICATOR_NAMES[0];
+        build_menu(config);
+        await  render(config);
     }

@@ -7,6 +7,12 @@ span {
     color: black;
     letter-spacing: 2px;
 }
+
+bg-lightdark {
+    background-color: #b2abab;
+}
+
+
 circle {
     fill: #b2abab;
     fill-opacity: 0.8;
@@ -20,4 +26,18 @@ circle#code-392 {
 }
 circle#code-10 {
     display: none;
+}
+
+.full-height {
+    height: 100%;
+}
+.full-width {
+    width: 100%;
+}
+
+
+.card-menu {
+    margin-right: 20px;
+    margin-left: 20px;
+    margin-bottom: 10px;
 }
