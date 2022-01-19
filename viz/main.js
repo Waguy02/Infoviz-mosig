@@ -16,20 +16,37 @@ var dataset=[];
 var countries={};
 const YEARS=[2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2018,2019,2020]
 var INDICATOR_NAMES=[]
-const SUBINDICATOR_INDEX="Index",SUBDINDICATOR_RANK="Rank"
+const SUBINDICATOR_INDEX="Index",
+    SUBDINDICATOR_RANK="Rank"
 
 //4. Scaling ;
-const RADIUS_FACTOR=1.2;
+const RADIUS_FACTOR=10;
+const RADIUS_MIN=5;
 
 
 //5. Configuration;
 var config={
     year:2006,
     indicator:undefined,
-    show_rank:false,
+    rank_mode:true,
     aggregate_continents:false,
+}
+
+
+//6. Color
+
+var CONTINENTS_COLOUR={
+    Africa:"yellow",
+    Europe:"red",
+    "North America":"orange",
+    "South America":"purple",
+    Asia :"green",
+    Oceania:"pink"
+
 
 }
+
+
 
 //Functions
 
@@ -41,10 +58,19 @@ async function setup_dataset(){
         path = d3.geoPath().projection(projection);
 
         async function load_countries_positions(){
+            //Draw map
+            svg.append("path")
+                .datum(topojson.feature(world, world.objects.countries))
+                .attr("d", path)
+                .attr("class", "land-boundary");
+
+
+
+
             //Now loading countries positions;
             let features=topojson.feature(world, world.objects.countries).features;
             for(let d of features){
-                country={
+                let country={
                     name: d["id"],
                     center:path.centroid(d),
                     radius:Math.sqrt(path.area(d) / Math.PI)
@@ -55,6 +81,22 @@ async function setup_dataset(){
             }
         await load_countries_positions();
 
+        async function load_continent_positions(){
+            await d3.csv("../data/continents.csv", d =>  {
+                let continent=d["Continent"];
+                let country=d["Country"];
+                if(!countries[country]){
+                    //continent not founnd
+                    return;
+                }
+                countries[country]["continent"]=continent;
+
+            }).
+            then(data=> {
+
+            });
+        }
+        await  load_continent_positions();
 
 
         await d3.csv("../data/data.csv", d =>  {
@@ -68,22 +110,27 @@ async function setup_dataset(){
                     }   ;
 
                 if(!countries[country_data.country_name]){
-                    country_data.id=country_data.indicator_id+country_data.indicator_id
                 //Position not found
                 return;
                 }
                 for (var year of YEARS)country_data.years_data[year.toString()]=parseFloat(d[year.toString()]);
                 country_data["center"]=countries[country_data.country_name].center;
                 country_data["radius"]=countries[country_data.country_name].radius;
+                country_data["continent"]=countries[country_data.country_name].continent;
                 dataset.push(country_data);
                 }).
         then(data=> {
-            INDICATOR_NAMES=[...new Set(dataset.map(d=>d.indicator_name))]
-            });
+            INDICATOR_NAMES=[...new Set(dataset.map(d=>d.indicator_name))].slice(0,19);
+            //The slice is performed because the dataset is dirty: there are shifts
+
+        });
 
 
 
-        }
+
+    }
+
+
 
 
 /***2
@@ -94,13 +141,35 @@ async function setup_dataset(){
  */
 async function render(config)
 {
-    const indicator_name=config.indicator, year=config.year,show_rank=config.show_rank,aggregate_continents=config.aggregate_continents;
+
+
+    const indicator_name=config.indicator, year=config.year,rank_mode=config.rank_mode,aggregate_continents=config.aggregate_continents;
     d3.selectAll("circle").remove(); //Remove all existing points;
 
 
 
     let filtered_values=dataset.filter((d) => d.indicator_name==indicator_name&&!isNaN(d.years_data[year])
         &&d.subindicator_type==SUBINDICATOR_INDEX);
+
+    let ranks=dataset.filter((d) => d.indicator_name==indicator_name&&!isNaN(d.years_data[year])
+        &&d.subindicator_type==SUBDINDICATOR_RANK).map(d=>d.years_data[year])
+
+    if(rank_mode){
+        let colour_scale=generateColourRange(filtered_values.length);
+        for (let i =0;i<filtered_values.length;i++){
+            let rank=ranks[i];
+            filtered_values[i]["rank"]=rank;
+            filtered_values[i]["colour"]=colour_scale[rank-1];
+            }
+    }
+    else{
+        for (let i =0;i<filtered_values.length;i++){
+            filtered_values[i]["colour"]=CONTINENTS_COLOUR[filtered_values[i].continent];
+        }
+    }
+
+
+
 
     const scaler=scaler_generator(filtered_values,year);
 
@@ -123,6 +192,9 @@ async function render(config)
 
 
         })
+        .style("fill",function(d) {
+            return d.colour;
+        })
         .attr("r", function(d) {
             return scaler(d);
         }).
@@ -144,7 +216,10 @@ function scaler_generator(filtered_values,year) {
     let max=Math.max(...values);
     let min=Math.min(...values);
     return function(x){
-        return x.years_data[year]*x.radius*RADIUS_FACTOR;
+        let x_scale=(x.years_data[year]-min)/(max-min);
+        ;
+
+        return RADIUS_MIN+x_scale*RADIUS_FACTOR;
     }
 }
 
@@ -154,11 +229,10 @@ function build_menu(config){
     d3.select("#year_selector").attr("min",YEARS[0]).attr("max",YEARS[YEARS.length-1]).attr("value",config.year);
     d3.select("#current_year").html(config.year.toString());
 
-    document.getElementById("year_selector").addEventListener(
+    const check_aggregation=document.getElementById("aggregation_check");
+    check_aggregation.addEventListener(
         'change', (e) => {
-            console.log("Rendering");
-            config.year=e.target.value;
-            d3.select("#current_year").html(config.year.toString());
+            config.rank_mode=!config.rank_mode;
             render(config);
 
         });
@@ -192,16 +266,81 @@ function build_menu(config){
 }
 
 
-async function init(){
-            width =document.getElementById("body").offsetWidth;
-            height =document.getElementById("body").offsetHeight;
-            svg = d3.select('#viz').append('svg').attr('width', width).attr('height', height);
+function generateColourRange(numberOfColours){
 
-        projection = d3.geoMercator().scale(200).translate([width / 2, height / 2]).precision(.1);
-        path = d3.geoPath().projection(projection);
+    function getRGBAValues(string) {
+
+        var cleaned = string.substring(string.indexOf('(') +1, string.length-1);
+        var split = cleaned.split(",");
+        var intValues = [];
+        for(var index in split){
+            intValues.push(parseInt(split[index]));
+        }
+        return intValues;
+    }
+    function hexToRGBA(hex, alpha){
+        var c;
+        if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
+            c= hex.substring(1).split('');
+            if(c.length== 3){
+                c= [c[0], c[0], c[1], c[1], c[2], c[2]];
+            }
+            c= '0x'+c.join('');
+            return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+alpha+')';
+        }
+
+        //throw new Error('Bad Hex');
+    }
+
+
+    const toColour="#b80d0d";
+    const fromColour="#2f6c04"
+
+    if(numberOfColours==1){
+        return [toColour];
+    }
+    var colours = []; //holds output
+    var fromSplit = getRGBAValues(hexToRGBA(fromColour, 1.0)); //get raw values from hex
+    var toSplit = getRGBAValues(hexToRGBA(toColour, 1.0));
+
+    var fromRed = fromSplit[0]; //the red value as integer
+    var fromGreen = fromSplit[1];
+    var fromBlue = fromSplit[2];
+
+    var toRed = toSplit[0];
+    var toGreen = toSplit[1];
+    var toBlue = toSplit[2];
+
+    var difRed = toRed - fromRed; //difference between the two
+    var difGreen = toGreen - fromGreen;
+    var difBlue = toBlue - fromBlue;
+
+    var incrementPercentage = 1 / (numberOfColours-1); //how much to increment percentage by
+
+    for (var n = 0; n < numberOfColours; n++){
+
+        var percentage = n * incrementPercentage; //calculate percentage
+        var red = (difRed * percentage + fromRed).toFixed(0); //round em for legibility
+        var green = (difGreen * percentage + fromGreen).toFixed(0);
+        var blue = (difBlue * percentage + fromBlue).toFixed(0);
+        var colour = 'rgba(' + red + ',' + green + ',' + blue + ',1)'; //create string literal
+        colours.push(colour); //push home
+
+    }
+
+    return colours;
+}
+
+async function init(){
+    width =document.getElementById("body").offsetWidth;
+    height =document.getElementById("body").offsetHeight;
+    svg = d3.select('#viz').append('svg').attr('width', width).attr('height', height);
+
+    projection = d3.geoMercator().scale(200).translate([width / 2, height / 2]).precision(.1);
+    path = d3.geoPath().projection(projection);
 
     await  setup_dataset() ;
-        config.indicator=INDICATOR_NAMES[0];
-        build_menu(config);
-        await  render(config);
-    }
+    config.indicator=INDICATOR_NAMES[0];
+    build_menu(config);
+    await  render(config);
+}
