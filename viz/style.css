@@ -1,0 +1,23 @@
+body {
+    font-family: Consolas, monaco, monospace;
+    color: grey;
+    background: #eee;
+}
+span {
+    color: black;
+    letter-spacing: 2px;
+}
+circle {
+    fill: lightblue;
+    fill-opacity: 0.5;
+    stroke: blue;
+    stroke-width: 0.5px;
+
+}
+circle#code-392 {
+    stroke: red;
+    fill: red;
+}
+circle#code-10 {
+    display: none;
+}
